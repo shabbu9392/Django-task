@@ -1,0 +1,57 @@
+----Basic Dockerfile for Django----
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+
+# Set work directory
+WORKDIR /app
+
+# Install dependencies
+COPY requirements.txt /app/
+RUN pip install --upgrade pip && pip install -r requirements.txt
+
+# Copy project files
+COPY . /app/
+
+# Expose port for Django
+EXPOSE 8000
+
+# Default command (for dev server)
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+---requirements.txt-----
+Django>=4.2
+gunicorn
+-----docker-compose.yml-----
+version: "3.9"
+
+services:
+  web:
+    build: .
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=1
+      - DJANGO_SETTINGS_MODULE=shop.settings
+    depends_on:
+      - db
+
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: mydb
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypass
+    ports:
+      - "5432:5432"
+------Build and Run----
+docker-compose up --build
+-----Dev-Only Dockerfile Adjustments----
+services:
+  web:
+    environment:
+      - DEBUG=1
+    command: python manage.py runserver_plus 0.0.0.0:8000
+
